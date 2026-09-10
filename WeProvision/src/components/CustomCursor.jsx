@@ -38,9 +38,12 @@ export default function CustomCursor() {
   useEffect(() => {
     const coarsePointer = window.matchMedia('(hover: none), (pointer: coarse)');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const isMobileViewport = window.matchMedia('(max-width: 1023px)');
 
-    if (coarsePointer.matches || reducedMotion.matches || 'ontouchstart' in window) {
-      return; // leave the system cursor untouched
+    if (coarsePointer.matches || reducedMotion.matches || 'ontouchstart' in window || isMobileViewport.matches) {
+      setEnabled(false);
+      document.body.classList.remove('custom-cursor-active');
+      return; // leave the system cursor untouched on touch & mobile viewports
     }
 
     setEnabled(true);

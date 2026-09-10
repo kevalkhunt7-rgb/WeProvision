@@ -138,7 +138,7 @@ export default function Navbar({ onReset }) {
             <img
               src={logo}
               alt="WEPROVISION INFOTECH"
-              className="h-[200px] sm:h-11 md:h-14 w-auto object-contain transition-transform duration-300 hover:scale-105"
+              className="h-[200px] sm:h-11 md:h-[250px] w-auto object-contain transition-transform duration-300 hover:scale-105"
             />
           </Link>
 

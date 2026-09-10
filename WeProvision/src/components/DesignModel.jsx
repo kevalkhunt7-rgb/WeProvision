@@ -16,6 +16,9 @@ export function DesignModel({
     scale: 0.5,
   },
   isMobile = false,
+  mobileScale,
+  mobilePosition,
+  mobileRotation,
 }) {
   const groupRef = useRef();
 
@@ -55,30 +58,33 @@ export function DesignModel({
     const pointer = state.pointer;
 
     if (groupRef.current) {
+      const targetPos = isMobile && mobilePosition ? mobilePosition : transformState.position;
+      const baseRot = isMobile && mobileRotation ? mobileRotation : transformState.rotation;
+
       // 1. Idle Floating Bobbing for Room Anchor
       const floatY = Math.sin(time * 1.6) * 0.04;
 
       // Position lerp for main room
       groupRef.current.position.x = THREE.MathUtils.lerp(
         groupRef.current.position.x,
-        transformState.position[0],
+        targetPos[0],
         0.08
       );
       groupRef.current.position.y = THREE.MathUtils.lerp(
         groupRef.current.position.y,
-        transformState.position[1] + floatY,
+        targetPos[1] + floatY,
         0.08
       );
       groupRef.current.position.z = THREE.MathUtils.lerp(
         groupRef.current.position.z,
-        transformState.position[2],
+        targetPos[2],
         0.08
       );
 
       // 2. Pointer Mouse Parallax Tilt
-      const targetRotX = transformState.rotation[0] + pointer.y * 0.08;
-      const targetRotY = transformState.rotation[1] + pointer.x * 0.12;
-      const targetRotZ = transformState.rotation[2];
+      const targetRotX = baseRot[0] + pointer.y * 0.08;
+      const targetRotY = baseRot[1] + pointer.x * 0.12;
+      const targetRotZ = baseRot[2];
 
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
@@ -96,8 +102,9 @@ export function DesignModel({
         0.08
       );
 
-      // 3. Room Scale Interpolation
-      const targetScale = transformState.scale * (isMobile ? 0.6 : 1);
+      // 3. Room Scale Interpolation (Mobile View Override or Scale Multiplier)
+      const scaleMult = isMobile ? (mobileScale ?? 0.6) : 1;
+      const targetScale = transformState.scale * scaleMult;
       groupRef.current.scale.setScalar(
         THREE.MathUtils.lerp(groupRef.current.scale.x, targetScale, 0.08)
       );

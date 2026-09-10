@@ -151,7 +151,8 @@ function ScenePipeline({ scrollProgress, quality }) {
   const droneRef = useRef();
   const tableRef = useRef();
   const cameraRigRef = useRef();
-  const { camera } = useThree();
+  const { camera, size } = useThree();
+  const isMobile = size.width < 1024;
 
   const smoothP = useRef(0);
   const prevSmoothP = useRef(0);
@@ -443,11 +444,194 @@ function ScenePipeline({ scrollProgress, quality }) {
    * jitter/flicker layered on top of the deterministic motion.
    * ============================================================ */
   useFrame((state, delta) => {
+    const time = state.clock.getElapsedTime();
+
+    if (isMobile) {
+      // -------------------------------------------------------------
+      // MOBILE MODE: DO NOT FOLLOW SCROLLING SCRIPT
+      // Display models normally in fixed, stable positions with idle animations.
+      // -------------------------------------------------------------
+      coreMat.uniforms.uTime.value = time;
+      holoMat.uniforms.uTime.value = time;
+
+      if (cameraRigRef.current) {
+        cameraRigRef.current.position.set(0, 0, 0);
+      }
+      if (camera.isPerspectiveCamera && camera.fov !== 45) {
+        camera.fov = 45;
+        camera.updateProjectionMatrix();
+      }
+
+      // 1. Controller (Hero section accent)
+      if (controllerRef.current) {
+        controllerRef.current.visible = true;
+        controllerRef.current.position.set(
+          MOBILE_MODEL_CONFIGS.controller.position[0],
+          MOBILE_MODEL_CONFIGS.controller.position[1] + 1.5 + Math.sin(time * 1.5) * 0.06,
+          MOBILE_MODEL_CONFIGS.controller.position[2] - 0.6
+        );
+        controllerRef.current.rotation.set(
+          MOBILE_MODEL_CONFIGS.controller.rotation[0] + Math.sin(time * 0.8) * 0.05,
+          MOBILE_MODEL_CONFIGS.controller.rotation[1] + Math.sin(time * 0.5) * 0.4,
+          MOBILE_MODEL_CONFIGS.controller.rotation[2]
+        );
+        controllerRef.current.scale.setScalar(MOBILE_MODEL_CONFIGS.controller.scale * 0.76);
+
+        controllerRef.current.traverse((child) => {
+          if (child.isMesh && child.material) {
+            const mats = Array.isArray(child.material) ? child.material : [child.material];
+            mats.forEach((m) => {
+              if (m.transparent !== undefined) {
+                m.transparent = true;
+                m.opacity = 1;
+              }
+            });
+          }
+        });
+      }
+
+      // 2. Nether Portal (Why Choose Us section accent)
+      if (portalGroupRef.current) {
+        portalGroupRef.current.visible = true;
+        portalGroupRef.current.position.set(
+          MOBILE_MODEL_CONFIGS.portal.position[0],
+          MOBILE_MODEL_CONFIGS.portal.position[1] + 0.25 + Math.sin(time * 1.2) * 0.06,
+          MOBILE_MODEL_CONFIGS.portal.position[2] - 0.2
+        );
+        portalGroupRef.current.scale.setScalar(MOBILE_MODEL_CONFIGS.portal.scale);
+        portalGroupRef.current.rotation.set(
+          MOBILE_MODEL_CONFIGS.portal.rotation[0],
+          MOBILE_MODEL_CONFIGS.portal.rotation[1] + Math.sin(time * 0.3) * 0.1,
+          MOBILE_MODEL_CONFIGS.portal.rotation[2]
+        );
+
+        portalGroupRef.current.traverse((child) => {
+          if (child.isMesh && child.material) {
+            const mats = Array.isArray(child.material) ? child.material : [child.material];
+            mats.forEach((m) => {
+              m.transparent = true;
+              m.opacity = 0.9;
+            });
+          }
+        });
+
+        if (portalParticlesRef.current) {
+          const pos = portalParticles.positions;
+          for (let i = 0; i < portalParticleCount; i++) {
+            const a = portalParticles.angles[i] + time * portalParticles.speeds[i];
+            const r = portalParticles.radii[i];
+            pos[i * 3] = Math.cos(a) * r;
+            pos[i * 3 + 1] = portalParticles.heights[i] + Math.sin(time * 2 + i) * 0.05;
+            pos[i * 3 + 2] = Math.sin(a) * r * 0.3;
+          }
+          portalParticles.geometry.attributes.position.needsUpdate = true;
+          portalParticleMat.opacity = 0.85;
+        }
+
+        if (pinkDustParticlesRef.current) {
+          const pos = pinkDust.positions;
+          for (let i = 0; i < pinkDustCount; i++) {
+            const speed = pinkDust.speeds[i];
+            const sway = pinkDust.sways[i];
+            let z = (pinkDust.initials[i * 3 + 2] + time * speed * 0.5) % 2.5;
+            let x = pinkDust.initials[i * 3] + Math.sin(time * 2.2 + sway) * 0.14;
+            let y = pinkDust.initials[i * 3 + 1] + Math.cos(time * 1.6 + sway) * 0.10 + (z * 0.12);
+            pos[i * 3] = x;
+            pos[i * 3 + 1] = y;
+            pos[i * 3 + 2] = z;
+          }
+          pinkDust.geometry.attributes.position.needsUpdate = true;
+          pinkDustMat.opacity = 0.85;
+        }
+
+        if (portalLightRef.current) {
+          portalLightRef.current.intensity = (Math.sin(time * 8) * 3 + 8);
+        }
+        if (portalRimLightRef.current) {
+          portalRimLightRef.current.intensity = (Math.cos(time * 8) * 2 + 5);
+        }
+      }
+
+      // 3. Drone (Floating in center-lower section)
+      if (droneRef.current) {
+        droneRef.current.visible = true;
+        droneRef.current.position.set(
+          MOBILE_MODEL_CONFIGS.drone.position[0],
+          MOBILE_MODEL_CONFIGS.drone.position[1] - 1.0 + Math.sin(time * 1.8) * 0.08,
+          MOBILE_MODEL_CONFIGS.drone.position[2] + 0.4
+        );
+        droneRef.current.rotation.set(
+          MOBILE_MODEL_CONFIGS.drone.rotation[0] + Math.sin(time * 1.5) * 0.05,
+          MOBILE_MODEL_CONFIGS.drone.rotation[1] + time * 0.5,
+          MOBILE_MODEL_CONFIGS.drone.rotation[2] + Math.sin(time * 2.2) * 0.05
+        );
+        droneRef.current.scale.setScalar(MOBILE_MODEL_CONFIGS.drone.scale * 0.8);
+      }
+
+      if (thrusterGroupRef.current) {
+        thrusterGroupRef.current.visible = true;
+        const flicker = 1 + Math.sin(time * 40) * 0.08;
+        if (flameCoreRef.current) flameCoreRef.current.scale.set(1, flicker, 1);
+        if (flameOuterRef.current) flameOuterRef.current.scale.set(1, 1.3 * flicker, 1);
+        if (thrustParticlesRef.current) {
+          const pos = thrust.positions;
+          for (let i = 0; i < thrustCount; i++) {
+            const t = (thrust.offsets[i] + time * 0.6) % 1;
+            pos[i * 3] = thrust.spread[i * 2] * (1 + t);
+            pos[i * 3 + 1] = -t * 0.35;
+            pos[i * 3 + 2] = thrust.spread[i * 2 + 1] * (1 + t);
+          }
+          thrust.geometry.attributes.position.needsUpdate = true;
+          thrustParticleMat.opacity = 0.8;
+        }
+      }
+
+      // 4. Hologram Table (World Matrix section accent)
+      if (tableRef.current) {
+        tableRef.current.visible = true;
+        tableRef.current.position.set(
+          MOBILE_MODEL_CONFIGS.hologram.position[0],
+          MOBILE_MODEL_CONFIGS.hologram.position[1] - 1.5 + Math.sin(time * 1.4) * 0.06,
+          MOBILE_MODEL_CONFIGS.hologram.position[2]
+        );
+        tableRef.current.rotation.set(
+          MOBILE_MODEL_CONFIGS.hologram.rotation[0],
+          MOBILE_MODEL_CONFIGS.hologram.rotation[1] + time * 0.25,
+          MOBILE_MODEL_CONFIGS.hologram.rotation[2]
+        );
+        tableRef.current.scale.setScalar(MOBILE_MODEL_CONFIGS.hologram.scale * 0.85);
+
+        holoMat.uniforms.uOpacity.value = 0.5;
+
+        if (raysGroupRef.current) {
+          raysGroupRef.current.children.forEach((ray, i) => {
+            ray.material.opacity = 0.12 + Math.sin(time * 3 + i) * 0.06;
+          });
+        }
+
+        if (holoParticlesRef.current) {
+          const pos = holoParticles.positions;
+          const base = holoParticles.base;
+          for (let i = 0; i < holoParticleCount; i++) {
+            pos[i * 3] = base[i * 3] + Math.sin(time * 0.8 + i) * 0.05;
+            pos[i * 3 + 1] = base[i * 3 + 1] + (Math.sin(time * 0.5 + i * 2) + 1) * 0.05;
+            pos[i * 3 + 2] = base[i * 3 + 2] + Math.cos(time * 0.7 + i) * 0.05;
+          }
+          holoParticles.geometry.attributes.position.needsUpdate = true;
+          holoParticleMat.opacity = 0.7;
+        }
+      }
+
+      return;
+    }
+
+    // -------------------------------------------------------------
+    // DESKTOP MODE: KEEP SCROLLING SCRIPT EXACTLY AS IT IS
+    // -------------------------------------------------------------
     smoothP.current = THREE.MathUtils.damp(smoothP.current, scrollProgress.current, 6, delta);
     const p = smoothP.current;
     const dP = p - prevSmoothP.current;
     prevSmoothP.current = p;
-    const time = state.clock.getElapsedTime();
 
     coreMat.uniforms.uTime.value = time;
     holoMat.uniforms.uTime.value = time;
@@ -755,13 +939,13 @@ function ScenePipeline({ scrollProgress, quality }) {
 
       {/* ---------- PHASE 2: Nether Portal 3D Model + Wall Lights + Flying Pink Dust ---------- */}
       <group ref={portalGroupRef}>
-        {/* Dynamic Pulsing Wall Lights */}
-        <pointLight ref={portalLightRef} color="#E879F9" intensity={8} distance={7} decay={1.4} position={[7, 8.5, 7]} />
-        <pointLight ref={portalLightRef} color="#E879F9" intensity={8} distance={7} decay={1} position={[2, -0.5, 7]} />
-        <pointLight ref={portalLightRef} color="#E879F9" intensity={8} distance={7} decay={1} position={[2, 7.5, 7]} />
-        <pointLight ref={portalLightRef} color="#E879F9" intensity={8} distance={7} decay={1} position={[7, -0.5, 6]} />
-        {/* <pointLight ref={portalLightRef} color="#E879F9" intensity={0} distance={0} decay={0} position={[4.5, 4.5, 6]} /> */}
-        <pointLight ref={portalRimLightRef} color="#F472B6" intensity={5} distance={5} decay={1.8} position={[10, 8, 3]} />
+        {/* Dynamic Pulsing Wall Lights & High-Intensity Front Fill Lights */}
+        <pointLight ref={portalLightRef} color="#E879F9" intensity={16} distance={12} decay={1} position={[7, 8.5, 7]} />
+        <pointLight ref={portalLightRef} color="#E879F9" intensity={16} distance={12} decay={1} position={[2, -0.5, 7]} />
+        <pointLight ref={portalLightRef} color="#E879F9" intensity={16} distance={12} decay={1} position={[2, 7.5, 7]} />
+        <pointLight ref={portalLightRef} color="#E879F9" intensity={16} distance={12} decay={1} position={[7, -0.5, 6]} />
+        <pointLight ref={portalLightRef} color="#FFFFFF" intensity={14} distance={15} decay={1} position={[4.5, 4.5, 9]} />
+        <pointLight ref={portalRimLightRef} color="#F472B6" intensity={12} distance={10} decay={1.2} position={[10, 8, 3]} />
 
         {/* Portal 3D GLTF Model */}
         <primitive object={portalGltf.scene} />
@@ -838,6 +1022,256 @@ export default function GameDevCanvas({ scrollProgress }) {
           />
         </EffectComposer>
       */}
+    </Canvas>
+  );
+}
+
+/* ============================================================
+ * STANDALONE MOBILE 3D CANVAS COMPONENTS & TRANSFORM CONFIGS
+ * Dedicated 3D models embedded per content section on mobile viewports.
+ * Exported MOBILE_MODEL_CONFIGS allows global or per-instance customization
+ * of scale, position, and rotation for mobile viewports.
+ * ============================================================ */
+
+export const MOBILE_MODEL_CONFIGS = {
+  controller: {
+    scale: 1.5,
+    position: [-0.3, -1, 0],
+    rotation: [1, 0, 0],
+  },
+  portal: {
+    scale: 0.5,
+    position: [-2, -2, 0],
+    rotation: [0, 0.3, 0],
+  },
+  drone: {
+    scale: 1.1,
+    position: [0, -0.5, 0],
+    rotation: [0.10, Math.PI * 0.95, 0],
+  },
+  hologram: {
+    scale: 1.0,
+    position: [0, -0.7, 0],
+    rotation: [0.38, 0, 0],
+  },
+};
+
+function MobileControllerInner({ scale, position, rotation, config }) {
+  const groupRef = useRef();
+  const { scene } = useGLTF('/3dModels/gameController.glb');
+
+  const mobileConfig = useMemo(() => ({
+    scale: scale ?? config?.scale ?? MOBILE_MODEL_CONFIGS.controller.scale,
+    position: position ?? config?.position ?? MOBILE_MODEL_CONFIGS.controller.position,
+    rotation: rotation ?? config?.rotation ?? MOBILE_MODEL_CONFIGS.controller.rotation,
+  }), [scale, position, rotation, config]);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const time = state.clock.getElapsedTime();
+    groupRef.current.rotation.x = mobileConfig.rotation[0] + Math.sin(time * 0.8) * 0.05;
+    groupRef.current.rotation.y = mobileConfig.rotation[1] + Math.sin(time * 0.5) * 0.3;
+    groupRef.current.position.y = mobileConfig.position[1] + Math.sin(time * 1.5) * 0.06;
+  });
+
+  return (
+    <group
+      ref={groupRef}
+      position={mobileConfig.position}
+      scale={mobileConfig.scale}
+      rotation={mobileConfig.rotation}
+    >
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+export function MobileControllerCanvas({ scale, position, rotation, config, ...canvasProps }) {
+  return (
+    <Canvas
+      style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+      dpr={[1, 1.5]}
+      camera={{ position: [0, 0, 5], fov: 45 }}
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      {...canvasProps}
+    >
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[5, 8, 5]} intensity={2.5} color="#C084FC" />
+      <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#00F0FF" />
+      <pointLight position={[0, 2, 3]} intensity={2} color="#EC4899" />
+      <Suspense fallback={null}>
+        <MobileControllerInner scale={scale} position={position} rotation={rotation} config={config} />
+      </Suspense>
+    </Canvas>
+  );
+}
+
+function MobilePortalInner({ scale, position, rotation, config }) {
+  const groupRef = useRef();
+  const { scene } = useGLTF('/3dModels/nether_portal.glb');
+
+  // Clone scene & optimize materials for high-contrast bright visibility
+  const clonedScene = useMemo(() => {
+    const cloned = scene.clone(true);
+    cloned.traverse((child) => {
+      if (child.isMesh && child.material) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach((m) => {
+          m.transparent = false;
+          m.opacity = 1;
+          if (m.roughness !== undefined) m.roughness = 0.25;
+          if (m.metalness !== undefined) m.metalness = 0.65;
+        });
+      }
+    });
+    return cloned;
+  }, [scene]);
+
+  const mobileConfig = useMemo(() => ({
+    scale: scale ?? config?.scale ?? MOBILE_MODEL_CONFIGS.portal.scale,
+    position: position ?? config?.position ?? MOBILE_MODEL_CONFIGS.portal.position,
+    rotation: rotation ?? config?.rotation ?? MOBILE_MODEL_CONFIGS.portal.rotation,
+  }), [scale, position, rotation, config]);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const time = state.clock.getElapsedTime();
+    groupRef.current.rotation.y = mobileConfig.rotation[1] + Math.sin(time * 0.4) * 0.15;
+    groupRef.current.position.y = mobileConfig.position[1] + Math.sin(time * 1.2) * 0.06;
+  });
+
+  return (
+    <group
+      ref={groupRef}
+      position={mobileConfig.position}
+      scale={mobileConfig.scale}
+      rotation={mobileConfig.rotation}
+    >
+      <primitive object={clonedScene} />
+    </group>
+  );
+}
+
+export function MobilePortalCanvas({ scale, position, rotation, config, ...canvasProps }) {
+  return (
+    <Canvas
+      style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+      dpr={[1, 1.5]}
+      camera={{ position: [0, 0, 5], fov: 45 }}
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      {...canvasProps}
+    >
+      {/* High-intensity multi-angle lighting for vivid portal rendering */}
+      <ambientLight intensity={3.8} />
+      <directionalLight position={[0, 5, 6]} intensity={5.0} color="#FFFFFF" />
+      <directionalLight position={[5, 8, 5]} intensity={4.5} color="#E879F9" />
+      <directionalLight position={[-5, 3, 2]} intensity={3.8} color="#38BDF8" />
+      <pointLight position={[0, 1, 4]} intensity={8.0} color="#F472B6" distance={15} />
+      <pointLight position={[0, -1, 3]} intensity={6.0} color="#C084FC" distance={12} />
+      <pointLight position={[0, 3, 2]} intensity={5.0} color="#00F0FF" distance={10} />
+      <Suspense fallback={null}>
+        <MobilePortalInner scale={scale} position={position} rotation={rotation} config={config} />
+      </Suspense>
+    </Canvas>
+  );
+}
+
+function MobileDroneInner({ scale, position, rotation, config }) {
+  const groupRef = useRef();
+  const { scene } = useGLTF('/3dModels/drone.glb');
+
+  const mobileConfig = useMemo(() => ({
+    scale: scale ?? config?.scale ?? MOBILE_MODEL_CONFIGS.drone.scale,
+    position: position ?? config?.position ?? MOBILE_MODEL_CONFIGS.drone.position,
+    rotation: rotation ?? config?.rotation ?? MOBILE_MODEL_CONFIGS.drone.rotation,
+  }), [scale, position, rotation, config]);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const time = state.clock.getElapsedTime();
+    groupRef.current.rotation.x = mobileConfig.rotation[0] + Math.sin(time * 1.5) * 0.05;
+    groupRef.current.rotation.y = mobileConfig.rotation[1] + time * 0.6;
+    groupRef.current.rotation.z = mobileConfig.rotation[2] + Math.sin(time * 2) * 0.05;
+    groupRef.current.position.y = mobileConfig.position[1] + Math.sin(time * 1.8) * 0.08;
+  });
+
+  return (
+    <group
+      ref={groupRef}
+      position={mobileConfig.position}
+      scale={mobileConfig.scale}
+      rotation={mobileConfig.rotation}
+    >
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+export function MobileDroneCanvas({ scale, position, rotation, config, ...canvasProps }) {
+  return (
+    <Canvas
+      style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+      dpr={[1, 1.5]}
+      camera={{ position: [0, 0, 5], fov: 45 }}
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      {...canvasProps}
+    >
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[5, 8, 5]} intensity={2.5} color="#C084FC" />
+      <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#00F0FF" />
+      <pointLight position={[0, 2, 3]} intensity={2.5} color="#EC4899" />
+      <Suspense fallback={null}>
+        <MobileDroneInner scale={scale} position={position} rotation={rotation} config={config} />
+      </Suspense>
+    </Canvas>
+  );
+}
+
+function MobileHologramInner({ scale, position, rotation, config }) {
+  const groupRef = useRef();
+  const { scene } = useGLTF('/3dModels/hologram.glb');
+
+  const mobileConfig = useMemo(() => ({
+    scale: scale ?? config?.scale ?? MOBILE_MODEL_CONFIGS.hologram.scale,
+    position: position ?? config?.position ?? MOBILE_MODEL_CONFIGS.hologram.position,
+    rotation: rotation ?? config?.rotation ?? MOBILE_MODEL_CONFIGS.hologram.rotation,
+  }), [scale, position, rotation, config]);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const time = state.clock.getElapsedTime();
+    groupRef.current.rotation.y = mobileConfig.rotation[1] + time * 0.3;
+    groupRef.current.position.y = mobileConfig.position[1] + Math.sin(time * 1.4) * 0.06;
+  });
+
+  return (
+    <group
+      ref={groupRef}
+      position={mobileConfig.position}
+      scale={mobileConfig.scale}
+      rotation={mobileConfig.rotation}
+    >
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+export function MobileHologramCanvas({ scale, position, rotation, config, ...canvasProps }) {
+  return (
+    <Canvas
+      style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+      dpr={[1, 1.5]}
+      camera={{ position: [0, 0, 5], fov: 45 }}
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      {...canvasProps}
+    >
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[5, 8, 5]} intensity={2.5} color="#A855F7" />
+      <directionalLight position={[-5, 3, -2]} intensity={1.8} color="#00F0FF" />
+      <pointLight position={[0, 2, 3]} intensity={3} color="#EC4899" />
+      <Suspense fallback={null}>
+        <MobileHologramInner scale={scale} position={position} rotation={rotation} config={config} />
+      </Suspense>
     </Canvas>
   );
 }

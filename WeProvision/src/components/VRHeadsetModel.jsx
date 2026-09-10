@@ -18,6 +18,9 @@ export function VRHeadsetModel({
     exploded: 0,
   },
   isMobile = false,
+  mobileScale,
+  mobilePosition,
+  mobileRotation,
 }) {
   const groupRef = useRef();
   const innerRef = useRef();
@@ -61,30 +64,33 @@ export function VRHeadsetModel({
 
     if (groupRef.current) {
       const lerpSpeed = 0.10;
+      const targetPos = isMobile && mobilePosition ? mobilePosition : transformState.position;
+      const baseRot = isMobile && mobileRotation ? mobileRotation : transformState.rotation;
+
       // 1. Idle Floating (Sine wave on Y position)
       const floatY = Math.sin(time * 1.8) * 0.08;
       groupRef.current.position.y = THREE.MathUtils.lerp(
         groupRef.current.position.y,
-        transformState.position[1] + floatY,
+        targetPos[1] + floatY,
         lerpSpeed
       );
 
       groupRef.current.position.x = THREE.MathUtils.lerp(
         groupRef.current.position.x,
-        transformState.position[0],
+        targetPos[0],
         lerpSpeed
       );
 
       groupRef.current.position.z = THREE.MathUtils.lerp(
         groupRef.current.position.z,
-        transformState.position[2],
+        targetPos[2],
         lerpSpeed
       );
 
       // 2. Mouse Parallax Tilt
-      const targetRotX = transformState.rotation[0] + pointer.y * 0.12;
-      const targetRotY = transformState.rotation[1] + pointer.x * 0.18;
-      const targetRotZ = transformState.rotation[2];
+      const targetRotX = baseRot[0] + pointer.y * 0.12;
+      const targetRotY = baseRot[1] + pointer.x * 0.18;
+      const targetRotZ = baseRot[2];
 
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
@@ -102,8 +108,9 @@ export function VRHeadsetModel({
         lerpSpeed
       );
 
-      // 3. Smooth Scale Interpolation
-      const targetScale = transformState.scale * (isMobile ? 0.45 : 1);
+      // 3. Smooth Scale Interpolation (Mobile View Override or Scale Multiplier)
+      const scaleMult = isMobile ? (mobileScale ?? 0.45) : 1;
+      const targetScale = transformState.scale * scaleMult;
       groupRef.current.scale.setScalar(
         THREE.MathUtils.lerp(groupRef.current.scale.x, targetScale, lerpSpeed)
       );
