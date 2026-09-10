@@ -1,0 +1,213 @@
+{
+  "services": [
+    {
+      "id": "game-dev",
+      "title": "GAME DEVELOPMENT",
+      "category": "Interactive Gaming & Real-time Engines",
+      "model": "/3dModels/gameController.glb",
+      "tagline": "Immersive gameplay experiences, interactive real-time worlds, and engaging digital games with high-fidelity physics.",
+      "items": [
+        "Game Architecture & Engine Programming",
+        "Unreal Engine 5 & Unity Systems",
+        "Multiplayer & Real-time Networking"
+      ],
+      "color": "#EC4899",
+      "active": true,
+      "projectsCount": 14,
+      "status": "Active"
+    },
+    {
+      "id": "software-dev",
+      "title": "SOFTWARE DEVELOPMENT",
+      "category": "Enterprise Infrastructure & Systems",
+      "model": "/3dModels/futuristic_sci-fi_energy_core.glb",
+      "tagline": "Powerful enterprise technology engineered for mission-critical challenges and high-throughput cloud architectures.",
+      "items": [
+        "Custom Distributed Software",
+        "High-Performance API Pipelines",
+        "Cloud Architecture & Microservices"
+      ],
+      "color": "#A855F7",
+      "active": true,
+      "projectsCount": 22,
+      "status": "Active"
+    },
+    {
+      "id": "3d-modeling",
+      "title": "3D MODELING & CGI",
+      "category": "Visual Media & Digital Assets",
+      "model": "/3dModels/drone.glb",
+      "tagline": "From initial concept sketches to fully realized production-ready 3D assets, procedural shaders, and hard-surface models.",
+      "items": [
+        "3D Hard-Surface & Character Modeling",
+        "Photorealistic Product Visualization",
+        "PBR Texture & Custom Shader Design"
+      ],
+      "color": "#C084FC",
+      "active": true,
+      "projectsCount": 38,
+      "status": "Active"
+    },
+    {
+      "id": "web-dev",
+      "title": "WEB DEVELOPMENT",
+      "category": "Next-Gen Web & Immersive UI",
+      "model": "/3dModels/hologram.glb",
+      "tagline": "Modern, scalable web applications featuring custom WebGL shaders, fluid motion, and responsive interface architectures.",
+      "items": [
+        "Full-Stack Web Architectures",
+        "Three.js & WebGL Visualizations",
+        "High-Performance React Applications"
+      ],
+      "color": "#06B6D4",
+      "active": true,
+      "projectsCount": 45,
+      "status": "Active"
+    },
+    {
+      "id": "vr-dev",
+      "title": "VR & SPATIAL COMPUTING",
+      "category": "Immersive Spatial Environments",
+      "model": "/3dModels/sci-fi_pedestal.glb",
+      "tagline": "Spatial experiences that transcend 2D screens, offering natural interactions, headset integration, and digital twins.",
+      "items": [
+        "Virtual Reality (VR) Applications",
+        "Spatial Interface Design & UX",
+        "Interactive 3D Showrooms"
+      ],
+      "color": "#3B82F6",
+      "active": true,
+      "projectsCount": 19,
+      "status": "Active"
+    },
+    {
+      "id": "graphics-designing",
+      "title": "GRAPHICS & BRANDING",
+      "category": "Brand Identity & Visual Design",
+      "model": "/3dModels/design_cube.glb",
+      "tagline": "Striking visual designs, brand identities, UI/UX systems, and marketing collateral for forward-thinking enterprises.",
+      "items": [
+        "Brand Architecture & Identity Guidelines",
+        "UI/UX Design Systems",
+        "3D Motion Graphics & Animation"
+      ],
+      "color": "#10B981",
+      "active": true,
+      "projectsCount": 29,
+      "status": "Active"
+    }
+  ],
+  "portfolio": [
+    {
+      "id": "proj-1788849944309",
+      "title": "dddddddddddd",
+      "category": "3D & CGI Modeling",
+      "subtitle": "dddddddddddddddddddddddd",
+      "description": "ddddddddddddddddddddddddddddddd",
+      "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80",
+      "techStack": [
+        "React",
+        "Tailwind CSS",
+        "dddThree.js",
+        "Node.js"
+      ],
+      "metrics": [
+        {
+          "label": "Performance",
+          "value": "100%"
+        },
+        {
+          "label": "User Satisfaction",
+          "value": "4.9/5"
+        }
+      ],
+      "features": [
+        "Real-time rendering",
+        "High performance design architecture"
+      ],
+      "status": "Published",
+      "featured": false,
+      "client": "dddddddddddddddd"
+    }
+  ],
+  "jobs": [],
+  "applications": [
+    {
+      "id": "app-1788861527573",
+      "applicantName": "Keval Khunt",
+      "email": "kevalkhunt7@gmail.com",
+      "phone": "",
+      "jobTitle": "Graphics Designer",
+      "appliedDate": "2026-09-08",
+      "portfolioUrl": "",
+      "resumeUrl": "#",
+      "status": "New",
+      "coverLetter": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+    },
+    {
+      "id": "app-1788859947963",
+      "applicantName": "Keval Khunt",
+      "email": "kevalkhunt7@gmail.com",
+      "phone": "",
+      "jobTitle": "Digital Marketing Manager",
+      "appliedDate": "2026-09-08",
+      "portfolioUrl": "",
+      "resumeUrl": "#",
+      "status": "New",
+      "coverLetter": "sssssssssssssssssssssssssssssssssssssssss"
+    }
+  ],
+  "inquiries": [
+    {
+      "id": "inq-1788942558091",
+      "name": "Keval Khunt",
+      "email": "kevalkhunt7@gmail.com",
+      "phone": "",
+      "company": "Direct Client",
+      "service": "Game Development",
+      "budget": "Flexible",
+      "subject": "Game Development",
+      "message": "deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "date": "9/9/2026, 1:59:18 PM",
+      "status": "Replied",
+      "priority": "High",
+      "lastRepliedAt": "2026-09-10T05:24:52.724Z"
+    },
+    {
+      "id": "inq-1788940647507",
+      "name": "Keval Khunt",
+      "email": "kevalkhunt7@gmail.com",
+      "phone": "",
+      "company": "Direct Client",
+      "service": "Web Development",
+      "budget": "Flexible",
+      "subject": "Web Development",
+      "message": "hello this is testing only of mail services",
+      "date": "9/9/2026, 1:27:27 PM",
+      "status": "Unread",
+      "priority": "High"
+    }
+  ],
+  "users": [
+    {
+      "id": "user-admin-1",
+      "name": "Keval Patel",
+      "email": "admin@weprovision.com",
+      "password": "admin123",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
+    },
+    {
+      "id": "usr_1788773296737",
+      "name": "WeProvision Infotech",
+      "email": "weprovisioninfotech@gmail.com",
+      "password": "6757ddaccd3ac9d1f040bc8c4fdc58397f7bca9e80bf44d823951c740a017e1b155706e461eb63a88bb94c2c27ac18d7ac8e69673b52c6b89113186a9935308c",
+      "role": "superadmin",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      "createdAt": "2026-09-07T09:28:16.738Z"
+    }
+  ],
+  "settings": {
+    "maintenanceMode": false
+  }
+}
