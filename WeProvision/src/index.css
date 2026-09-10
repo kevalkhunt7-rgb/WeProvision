@@ -61,6 +61,13 @@ body {
   animation: pulseGlow 3s ease-in-out infinite;
 }
 
+/* Custom Cursor styling & pointer-events prevention */
+.custom-cursor-element,
+.custom-cursor-element * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
 /* Hide default cursor on desktop when CustomCursor component is mounted */
 body.custom-cursor-active,
 body.custom-cursor-active * {

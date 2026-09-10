@@ -214,9 +214,8 @@ export default function TestimonialsCom() {
                 key={dotIdx}
                 onClick={() => goTo(dotIdx)}
                 aria-label={`Go to slide ${dotIdx + 1}`}
-                className={`relative rounded-full overflow-hidden transition-all duration-300 ${
-                  isActive ? 'w-8 h-2.5 bg-white/15' : 'w-2.5 h-2.5 bg-white/20 hover:bg-white/40'
-                }`}
+                className={`relative rounded-full overflow-hidden transition-all duration-300 ${isActive ? 'w-8 h-2.5 bg-white/15' : 'w-2.5 h-2.5 bg-white/20 hover:bg-white/40'
+                  }`}
               >
                 {isActive && (
                   <motion.span

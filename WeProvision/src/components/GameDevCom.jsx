@@ -20,11 +20,12 @@ function AstroBotModel() {
 
   useEffect(() => {
     if (actions && Object.keys(actions).length > 0) {
-      Object.keys(actions).forEach((key) => {
-        const action = actions[key];
+      Object.values(actions).forEach((action) => {
         if (action) {
-          action.reset();
-          action.play();
+          action.setLoop(THREE.LoopRepeat, Infinity);
+          action.clampWhenFinished = false;
+          action.enabled = true;
+          action.reset().play();
         }
       });
     }
@@ -89,7 +90,7 @@ export default function GameDevCom() {
       <div className="w-full max-w-8xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
         {/* LEFT SIDE: 3D Astro Bot Canvas */}
-        <div className="w-full h-[520px] lg:h-[680px] relative flex flex-col items-center justify-center overflow-hidden isolate z-0">
+        <div className="w-full h-[320px] sm:h-[450px] lg:h-[680px] relative flex flex-col items-center justify-center overflow-hidden isolate z-0">
           <Canvas
             frameloop={isNear ? 'always' : 'never'}
             dpr={[1, 1.5]}
@@ -118,7 +119,7 @@ export default function GameDevCom() {
         </div>
 
         {/* RIGHT SIDE: Text Content */}
-        <div className="flex flex-col -mt-30 items-start text-left z-10">
+        <div className="flex flex-col mt-0 lg:-mt-30 items-start text-left z-10">
 
           <div className="flex items-center gap-3 mb-4">
             <span className="w-8 h-[1px] bg-[#d946ef]"></span>

@@ -39,7 +39,6 @@ export default function Navbar({ onReset }) {
   const [servicesDropdown, setServicesDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-
   // Scroll background switch
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -117,157 +116,175 @@ export default function Navbar({ onReset }) {
   };
 
   return (
-    <header
-      className={`fixed top-0 left-0 w-full z-40 transition-all duration-500 ease-in-out ${
-        scrolled
-          ? 'bg-[#0d111a]/90 backdrop-blur-md shadow-lg shadow-black/40 border-b border-white/5'
-          : 'bg-transparent border-b border-transparent'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 h-25 flex items-center justify-between">
+    <>
+      <header
+        className={`fixed top-0 left-0 w-full z-40 transition-all duration-500 ease-in-out ${
+          scrolled
+            ? 'bg-[#0d111a]/90 backdrop-blur-md shadow-lg shadow-black/40 border-b border-white/5'
+            : 'bg-transparent border-b border-transparent'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 h-20 md:h-25 flex items-center justify-between">
 
-        {/* Logo */}
-        <Link
-          to="/"
-          onClick={() => {
-            onReset && onReset();
-            handleLinkClick();
-          }}
-          className="flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C084FC] rounded-lg py-2"
-        >
-          <img
-            src={logo}
-            alt="WEPROVISION INFOTECH"
-            className="h-[70px] sm:h-[300px]  w-auto object-contain transition-transform duration-300 hover:scale-105"
-          />
-        </Link>
+          {/* Logo (Scales appropriately on mobile and desktop) */}
+          <Link
+            to="/"
+            onClick={() => {
+              onReset && onReset();
+              handleLinkClick();
+            }}
+            className="flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C084FC] rounded-lg py-2"
+          >
+            <img
+              src={logo}
+              alt="WEPROVISION INFOTECH"
+              className="h-[200px] sm:h-11 md:h-14 w-auto object-contain transition-transform duration-300 hover:scale-105"
+            />
+          </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-white">
-          {NAV_LINKS.map((link) => {
-            const isActive = isLinkActive(link);
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-white">
+            {NAV_LINKS.map((link) => {
+              const isActive = isLinkActive(link);
 
-            if (link.hasDropdown) {
-              return (
-                <div
-                  key={link.label}
-                  ref={dropdownRef}
-                  className="relative"
-                  onMouseEnter={() => setServicesDropdown(true)}
-                  onMouseLeave={() => setServicesDropdown(false)}
-                >
-                  <button
-                    onClick={() => setServicesDropdown((v) => !v)}
-                    aria-expanded={servicesDropdown}
-                    aria-haspopup="true"
-                    className={`flex items-center gap-1.5 transition-colors duration-200 py-2 focus:outline-none ${
-                      isActive ? 'text-[#C084FC] font-semibold' : 'text-white hover:text-[#C084FC]'
-                    }`}
+              if (link.hasDropdown) {
+                return (
+                  <div
+                    key={link.label}
+                    ref={dropdownRef}
+                    className="relative"
+                    onMouseEnter={() => setServicesDropdown(true)}
+                    onMouseLeave={() => setServicesDropdown(false)}
                   >
-                    {link.label}
-                    <ChevronDown
-                      size={15}
-                      className={`transition-transform duration-200 ${servicesDropdown ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                    <button
+                      onClick={() => setServicesDropdown((v) => !v)}
+                      aria-expanded={servicesDropdown}
+                      aria-haspopup="true"
+                      className={`flex items-center gap-1.5 transition-colors duration-200 py-2 focus:outline-none ${
+                        isActive ? 'text-[#C084FC] font-semibold' : 'text-white hover:text-[#C084FC]'
+                      }`}
+                    >
+                      {link.label}
+                      <ChevronDown
+                        size={15}
+                        className={`transition-transform duration-200 ${servicesDropdown ? 'rotate-180' : ''}`}
+                      />
+                    </button>
 
-                  {/* Active Underline for Services */}
+                    {/* Active Underline for Services */}
+                    <span
+                      className={`absolute -bottom-0.5 left-0 h-[2px] bg-gradient-to-r from-[#F472B6] to-[#C084FC] transition-all duration-300 ${
+                        isActive ? 'w-full' : 'w-0'
+                      }`}
+                    />
+
+                    {/* Dropdown Menu */}
+                    <div
+                      className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-56 py-2 bg-[#0d111a] border border-white/10 rounded-xl shadow-2xl backdrop-blur-xl origin-top transition-all duration-200 ${
+                        servicesDropdown
+                          ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+                          : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+                      }`}
+                    >
+                      {activeServices.map((subItem) => {
+                        const isSubActive = currentPath === subItem.href;
+                        return (
+                          <Link
+                            key={subItem.label}
+                            to={subItem.href}
+                            onClick={handleLinkClick}
+                            className={`block px-4 py-2.5 text-sm transition-all duration-150 ${
+                              isSubActive
+                                ? 'text-[#C084FC] font-semibold bg-white/10 pl-5'
+                                : 'text-zinc-300 font-normal hover:text-white hover:bg-white/5 hover:pl-5'
+                            }`}
+                          >
+                            {subItem.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  onClick={handleLinkClick}
+                  className={`relative py-2 transition-colors duration-200 focus:outline-none ${
+                    isActive ? 'text-[#C084FC] font-semibold' : 'text-white hover:text-[#C084FC]'
+                  }`}
+                >
+                  {link.label}
                   <span
                     className={`absolute -bottom-0.5 left-0 h-[2px] bg-gradient-to-r from-[#F472B6] to-[#C084FC] transition-all duration-300 ${
                       isActive ? 'w-full' : 'w-0'
                     }`}
                   />
-
-                  {/* Dropdown Menu */}
-                  <div
-                    className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-56 py-2 bg-[#0d111a] border border-white/10 rounded-xl shadow-2xl backdrop-blur-xl origin-top transition-all duration-200 ${
-                      servicesDropdown
-                        ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-                        : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
-                    }`}
-                  >
-                    {activeServices.map((subItem) => {
-                      const isSubActive = currentPath === subItem.href;
-                      return (
-                        <Link
-                          key={subItem.label}
-                          to={subItem.href}
-                          onClick={handleLinkClick}
-                          className={`block px-4 py-2.5 text-sm transition-all duration-150 ${
-                            isSubActive
-                              ? 'text-[#C084FC] font-semibold bg-white/10 pl-5'
-                              : 'text-zinc-300 font-normal hover:text-white hover:bg-white/5 hover:pl-5'
-                          }`}
-                        >
-                          {subItem.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
+                </Link>
               );
-            }
+            })}
+          </nav>
 
-            return (
-              <Link
-                key={link.label}
-                to={link.href}
-                onClick={handleLinkClick}
-                className={`relative py-2 transition-colors duration-200 focus:outline-none ${
-                  isActive ? 'text-[#C084FC] font-semibold' : 'text-white hover:text-[#C084FC]'
-                }`}
-              >
-                {link.label}
-                <span
-                  className={`absolute -bottom-0.5 left-0 h-[2px] bg-gradient-to-r from-[#F472B6] to-[#C084FC] transition-all duration-300 ${
-                    isActive ? 'w-full' : 'w-0'
-                  }`}
-                />
-              </Link>
-            );
-          })}
-        </nav>
+          {/* Mobile Hamburger Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden p-2 text-white hover:text-[#C084FC] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C084FC] rounded-lg transition-colors"
+            aria-label="Open navigation menu"
+          >
+            <Menu size={26} />
+          </button>
+        </div>
+      </header>
 
-        {/* Mobile Hamburger Toggle */}
-        <button
-          onClick={() => setMobileMenuOpen((v) => !v)}
-          className="md:hidden p-2 text-white hover:text-[#C084FC] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C084FC] rounded-lg transition-colors"
-          aria-label="Toggle navigation menu"
-          aria-expanded={mobileMenuOpen}
-        >
-          <span className="relative block w-6 h-6">
-            <Menu
-              size={24}
-              className={`absolute inset-0 transition-all duration-300 ${
-                mobileMenuOpen ? 'opacity-0 rotate-90 scale-75' : 'opacity-100 rotate-0 scale-100'
-              }`}
-            />
-            <X
-              size={24}
-              className={`absolute inset-0 transition-all duration-300 ${
-                mobileMenuOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-75'
-              }`}
-            />
-          </span>
-        </button>
-      </div>
-
-      {/* Mobile Drawer */}
+      {/* Mobile Slide-in Drawer Overlay */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-[#0d111a] border-t border-white/10 shadow-2xl ${
-          mobileMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0'
+        onClick={() => setMobileMenuOpen(false)}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden ${
+          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Mobile Slide-in Drawer (Slides from Right on top) */}
+      <aside
+        className={`fixed top-0 right-0 h-full w-[80%] max-w-sm bg-[#0d111a] border-l border-white/10 shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="px-6 py-6 flex flex-col space-y-1">
+        {/* Drawer Header */}
+        <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
+          <Link
+            to="/"
+            onClick={() => {
+              onReset && onReset();
+              handleLinkClick();
+            }}
+          >
+            <img src={logo} alt="WEPROVISION INFOTECH" className="h-[200px] w-auto object-contain" />
+          </Link>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-2 text-zinc-400 hover:text-white rounded-lg focus:outline-none"
+            aria-label="Close menu"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Drawer Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col space-y-2">
           {NAV_LINKS.map((link) => {
             const isActive = isLinkActive(link);
 
             if (link.hasDropdown) {
               return (
-                <div key={link.label} className="border-b border-white/5 last:border-none">
+                <div key={link.label} className="border-b border-white/5 pb-2">
                   <button
                     onClick={() => setMobileServicesOpen((v) => !v)}
-                    className={`w-full flex items-center justify-between py-3 text-base font-medium transition-colors ${
+                    className={`w-full flex items-center justify-between py-2.5 text-base font-medium transition-colors ${
                       isActive ? 'text-[#C084FC] font-semibold' : 'text-zinc-200'
                     }`}
                   >
@@ -279,10 +296,10 @@ export default function Navbar({ onReset }) {
                   </button>
                   <div
                     className={`overflow-hidden transition-all duration-300 ${
-                      mobileServicesOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
+                      mobileServicesOpen ? 'max-h-72 opacity-100 mt-1' : 'max-h-0 opacity-0'
                     }`}
                   >
-                    <div className="pb-3 pl-3 flex flex-col space-y-1">
+                    <div className="pl-4 flex flex-col space-y-2 border-l border-white/10 my-1">
                       {activeServices.map((subItem) => {
                         const isSubActive = currentPath === subItem.href;
                         return (
@@ -290,8 +307,8 @@ export default function Navbar({ onReset }) {
                             key={subItem.label}
                             to={subItem.href}
                             onClick={handleLinkClick}
-                            className={`py-2 text-sm transition-colors ${
-                              isSubActive ? 'text-[#C084FC] font-semibold' : 'text-zinc-400 hover:text-white'
+                            className={`py-1.5 text-sm transition-colors ${
+                              isSubActive ? 'text-[#C084FC] font-medium' : 'text-zinc-400 hover:text-white'
                             }`}
                           >
                             {subItem.label}
@@ -309,7 +326,7 @@ export default function Navbar({ onReset }) {
                 key={link.label}
                 to={link.href}
                 onClick={handleLinkClick}
-                className={`py-3 text-base font-medium border-b border-white/5 last:border-none transition-colors ${
+                className={`py-2.5 text-base font-medium border-b border-white/5 transition-colors ${
                   isActive ? 'text-[#C084FC] font-semibold' : 'text-zinc-200 hover:text-white'
                 }`}
               >
@@ -318,7 +335,7 @@ export default function Navbar({ onReset }) {
             );
           })}
         </div>
-      </div>
-    </header>
+      </aside>
+    </>
   );
 }

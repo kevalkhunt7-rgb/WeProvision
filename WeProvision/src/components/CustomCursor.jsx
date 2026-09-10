@@ -23,6 +23,18 @@ export default function CustomCursor() {
   const [mode, setMode] = useState('default'); // 'default' | 'interactive' | 'text' | 'model'
   const [isMouseDown, setIsMouseDown] = useState(false);
 
+  const isMouseDownRef = useRef(false);
+  const modeRef = useRef('default');
+  const mouseRef = useRef({
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
+  });
+  const posRef = useRef({
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0,
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0,
+  });
+  const clickScaleRef = useRef(1);
+
   useEffect(() => {
     const coarsePointer = window.matchMedia('(hover: none), (pointer: coarse)');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -35,18 +47,32 @@ export default function CustomCursor() {
     document.body.classList.add('custom-cursor-active');
 
     let animationFrameId;
-    const mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
     const handleMouseMove = (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
+      if (e.clientX !== undefined && e.clientY !== undefined) {
+        mouseRef.current.x = e.clientX;
+        mouseRef.current.y = e.clientY;
+      }
     };
-    const handleMouseDown = () => setIsMouseDown(true);
-    const handleMouseUp = () => setIsMouseDown(false);
+
+    const handleMouseDown = (e) => {
+      if (e && e.clientX !== undefined && e.clientY !== undefined) {
+        mouseRef.current.x = e.clientX;
+        mouseRef.current.y = e.clientY;
+      }
+      isMouseDownRef.current = true;
+      setIsMouseDown(true);
+    };
+
+    const handleMouseUp = () => {
+      isMouseDownRef.current = false;
+      setIsMouseDown(false);
+    };
+
     const handleMouseLeaveWindow = () => {
       if (cursorRef.current) cursorRef.current.style.opacity = '0';
     };
+
     const handleMouseEnterWindow = () => {
       if (cursorRef.current) cursorRef.current.style.opacity = '1';
     };
@@ -66,6 +92,7 @@ export default function CustomCursor() {
 
       if (isCanvas) {
         setMode('model');
+        modeRef.current = 'model';
         return;
       }
 
@@ -77,6 +104,7 @@ export default function CustomCursor() {
 
       if (isTextField) {
         setMode('text');
+        modeRef.current = 'text';
         return;
       }
 
@@ -86,13 +114,17 @@ export default function CustomCursor() {
         target.tagName === 'SELECT' ||
         target.closest('a') ||
         target.closest('button') ||
+        target.closest('.cursor-pointer') ||
         target.getAttribute('role') === 'button' ||
-        target.classList.contains('cursor-pointer');
+        (typeof target.className === 'string' && target.className.includes('cursor-pointer'));
 
-      setMode(isInteractive ? 'interactive' : 'default');
+      const newMode = isInteractive ? 'interactive' : 'default';
+      setMode(newMode);
+      modeRef.current = newMode;
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('pointermove', handleMouseMove, { passive: true });
     window.addEventListener('mouseover', handleMouseOver, { passive: true });
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mouseup', handleMouseUp);
@@ -102,19 +134,26 @@ export default function CustomCursor() {
     const lerp = (start, end, amount) => (1 - amount) * start + amount * end;
 
     const render = () => {
-      pos.x = lerp(pos.x, mouse.x, 0.2);
-      pos.y = lerp(pos.y, mouse.y, 0.2);
+      posRef.current.x = lerp(posRef.current.x, mouseRef.current.x, 0.2);
+      posRef.current.y = lerp(posRef.current.y, mouseRef.current.y, 0.2);
 
-      const dx = mouse.x - pos.x;
-      const dy = mouse.y - pos.y;
+      const dx = mouseRef.current.x - posRef.current.x;
+      const dy = mouseRef.current.y - posRef.current.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
       // 0 at rest -> 1 at full stretch. Drives both the scale and the
       // border-radius morph from circle to trailing teardrop.
       const stretch = Math.min(dist * 0.02, 1);
-      const scaleX = 1 + stretch * 0.6;
-      const scaleY = 1 / Math.sqrt(scaleX);
+      const baseScaleX = 1 + stretch * 0.6;
+      const baseScaleY = 1 / Math.sqrt(baseScaleX);
+
+      // Smooth click scale active animation inside rAF loop so position transform is never overwritten
+      const targetClickScale = isMouseDownRef.current && modeRef.current !== 'model' ? 0.85 : 1.0;
+      clickScaleRef.current = lerp(clickScaleRef.current, targetClickScale, 0.3);
+
+      const finalScaleX = baseScaleX * clickScaleRef.current;
+      const finalScaleY = baseScaleY * clickScaleRef.current;
 
       // Morph: leading edge stays round, trailing edge pinches to a point.
       const round = 50 - stretch * 20;
@@ -122,7 +161,7 @@ export default function CustomCursor() {
       const borderRadius = `${point}% ${round}% ${round}% ${point}% / 50% 50% 50% 50%`;
 
       if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%) rotate(${angle}deg) scale(${scaleX}, ${scaleY})`;
+        cursorRef.current.style.transform = `translate3d(${posRef.current.x}px, ${posRef.current.y}px, 0) translate(-50%, -50%) rotate(${angle}deg) scale(${finalScaleX}, ${finalScaleY})`;
         cursorRef.current.style.borderRadius = borderRadius;
       }
       if (iconRef.current) {
@@ -137,6 +176,7 @@ export default function CustomCursor() {
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('pointermove', handleMouseMove);
       window.removeEventListener('mouseover', handleMouseOver);
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -165,23 +205,20 @@ export default function CustomCursor() {
       : 'shadow-[0_0_32px_rgba(255,255,255,0.9)]',
   };
 
-  const clickSquish = isMouseDown && mode !== 'model' ? 'scale-90' : 'scale-100';
-
   return (
     <div
       ref={cursorRef}
       aria-hidden="true"
       className={[
-        'fixed top-0 left-0 pointer-events-none z-[9999] rounded-full',
+        'custom-cursor-element fixed top-0 left-0 pointer-events-none z-[9999] rounded-full select-none',
         'bg-white mix-blend-difference flex items-center justify-center',
-        // Only size, shadow, background, and click-squish are transitioned —
+        // Only size, shadow, background are transitioned —
         // never transform or border-radius, which the rAF loop owns.
         'transition-[width,height,box-shadow,background-color] duration-200 ease-out',
-        clickSquish,
         sizeByMode[mode],
         glowByMode[mode],
       ].join(' ')}
-      style={{ willChange: 'transform', transformOrigin: 'center center' }}
+      style={{ pointerEvents: 'none', willChange: 'transform', transformOrigin: 'center center' }}
     >
       
     </div>

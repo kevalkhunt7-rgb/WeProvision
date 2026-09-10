@@ -1,9 +1,9 @@
 import React, { useRef, useMemo, useEffect, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, useAnimations, Environment, Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { Sparkles, ArrowRight, Palette, Layers, Brush, Layout, Eye, RotateCcw } from 'lucide-react';
+import { Sparkles, ArrowRight, Palette, Brush, Layout, Eye } from 'lucide-react';
 import { useNearScreen } from '../hooks/useNearScreen';
 
 useGLTF.preload('/3dModels/phoenix_bird.glb');
@@ -56,7 +56,7 @@ function ParticleDust({ isMobile }) {
   const mat = useMemo(() => {
     return new THREE.PointsMaterial({
       size: isMobile ? 0.045 : 0.038,
-      color: '#EC4899', // Pink / Magenta Creative Accent
+      color: '#EC4899',
       transparent: true,
       opacity: 0.65,
       blending: THREE.AdditiveBlending,
@@ -68,12 +68,30 @@ function ParticleDust({ isMobile }) {
 }
 
 /* ============================================================
- * 3D GRAPHICS PHOENIX BIRD MODEL COMPONENT
+ * 3D GRAPHICS PHOENIX BIRD MODEL (RESPONSIVE CONFIG)
  * ============================================================ */
-function GraphicsShowcaseModel({ isMobile }) {
+function GraphicsShowcaseModel() {
   const groupRef = useRef();
   const { scene, animations } = useGLTF('/3dModels/phoenix_bird.glb');
   const { actions } = useAnimations(animations, groupRef);
+  const { size } = useThree();
+
+  const isDesktop = size.width >= 1024;
+
+  // Discrete position and scale parameters
+  const desktopConfig = {
+    scale: 0.0033,
+    position: [0, -0.2, 0],
+    rotation: [0.1, -0.4, 0],
+  };
+
+  const mobileConfig = {
+    scale: 0.0040,
+    position: [1, -0.7, 0],
+    rotation: [0.1, -0.3, 0],
+  };
+
+  const currentConfig = isDesktop ? desktopConfig : mobileConfig;
 
   useEffect(() => {
     if (actions && Object.keys(actions).length > 0) {
@@ -91,20 +109,17 @@ function GraphicsShowcaseModel({ isMobile }) {
     if (!groupRef.current) return;
     const time = state.clock.getElapsedTime();
 
-    // Gentle floating bobbing animation
-    groupRef.current.position.y = Math.sin(time * 1.5) * 0.12 - 0.7;
+    // Floating bobbing effect anchored to current baseline position
+    groupRef.current.position.y = currentConfig.position[1] + Math.sin(time * 1.5) * 0.1;
   });
 
-  const scale = isMobile ? 0.0028 : 0.0033;
-
   return (
-    <group ref={groupRef} position={[0, -0.2, 0]} rotation={[0.1, -0.4, 0]}>
-      <primitive
-        object={scene}
-        scale={scale}
-        position={[0, 0, 0]}
-      />
-      {/* Pink & Purple Studio Point Lights */}
+    <group
+      ref={groupRef}
+      position={currentConfig.position}
+      rotation={currentConfig.rotation}
+    >
+      <primitive object={scene} scale={currentConfig.scale} />
       <pointLight position={[0, 2, 1]} color="#EC4899" intensity={4.5} distance={8} />
       <pointLight position={[-2, -1, -1]} color="#A855F7" intensity={3.5} distance={6} />
       <pointLight position={[2, 1, -1]} color="#F59E0B" intensity={3.5} distance={6} />
@@ -116,9 +131,9 @@ function GraphicsShowcaseModel({ isMobile }) {
 function CanvasLoader() {
   return (
     <Html center>
-      <div className="flex flex-col items-center justify-center space-y-2 bg-[#1a0a14]/90 p-4 rounded-xl border border-pink-500/30 backdrop-blur-md">
-        <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-mono text-pink-300">Loading 3D Creative Model...</span>
+      <div className="flex flex-col items-center justify-center space-y-2 bg-[#1a0a14]/90 p-4 rounded-xl border border-pink-500/30 backdrop-blur-md whitespace-nowrap">
+        <div className="w-7 h-7 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-[11px] font-mono text-pink-300">Loading 3D Creative Model...</span>
       </div>
     </Html>
   );
@@ -147,12 +162,12 @@ export default function GraphicsCom() {
       </div>
 
       <div className="relative z-10 max-w-[1900px] mx-auto px-6 sm:px-12 flex flex-col min-h-[90vh]">
-
-        {/* 2-COLUMN GRID (LEFT: GRAPHICS 3D MODEL | RIGHT: CONTENT TEXT) */}
+        {/* 2-COLUMN GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 items-center w-full my-auto gap-8 lg:gap-12">
-
-          <div className="lg:col-span-7 w-full h-[550px] sm:h-[650px] lg:h-[800px] relative flex items-center justify-center bg-transparent overflow-visible order-1 lg:order-1">
-            <div className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto overflow-visible cursor-grab active:cursor-grabbing">
+          
+          {/* 3D PHOENIX MODEL CANVAS (Mobile: Order 1 / Desktop: Order 1, Left) */}
+          <div className="lg:col-span-7 w-full h-[360px] sm:h-[480px] lg:h-[800px] relative flex items-center justify-center bg-transparent overflow-hidden lg:overflow-visible order-1 lg:order-1">
+            <div className="absolute inset-0 w-full h-full bg-transparent overflow-visible">
               <Canvas
                 frameloop={isNear ? 'always' : 'never'}
                 dpr={[1, 1.5]}
@@ -175,7 +190,7 @@ export default function GraphicsCom() {
                 <ParticleDust isMobile={isMobile} />
 
                 <Suspense fallback={<CanvasLoader />}>
-                  <GraphicsShowcaseModel isMobile={isMobile} />
+                  <GraphicsShowcaseModel />
                 </Suspense>
 
                 <OrbitControls
@@ -194,13 +209,10 @@ export default function GraphicsCom() {
                 <Environment preset="studio" />
               </Canvas>
             </div>
-
-            {/* Interactive Drag & Rotate Hint Badge */}
-            
           </div>
 
-          {/* RIGHT COLUMN: CONTENT TEXT */}
-          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-left order-2 lg:order-2">
+          {/* CONTENT TEXT (Mobile: Order 2 / Desktop: Order 2, Right) */}
+          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-center lg:text-left items-center lg:items-start order-2 lg:order-2">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-pink-950/80 border border-pink-500/40 text-[#EC4899] font-mono text-xs font-bold tracking-wider w-fit shadow-[0_0_15px_rgba(236,72,153,0.2)]">
               <Sparkles size={14} />
               <span>CREATIVE GRAPHICS & UI/UX STUDIO</span>
@@ -218,7 +230,7 @@ export default function GraphicsCom() {
             </p>
 
             {/* Core Features & Tech Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 w-full text-left">
               <div className="p-4 rounded-xl bg-[#130d24]/80 border border-pink-500/20 backdrop-blur-md hover:border-pink-500/40 transition-all">
                 <div className="flex items-center gap-3 text-pink-400 font-bold text-sm mb-1.5">
                   <Palette size={18} className="text-[#EC4899]" />
@@ -261,10 +273,10 @@ export default function GraphicsCom() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4 w-full sm:w-auto">
               <Link
                 to="/services/graphics-designing"
-                className="group inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#f59e0b] text-white font-bold text-xs tracking-wider uppercase shadow-[0_0_25px_rgba(236,72,153,0.35)] hover:shadow-[0_0_35px_rgba(236,72,153,0.6)] hover:scale-[1.03] transition-all"
+                className="w-full sm:w-auto group inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#f59e0b] text-white font-bold text-xs tracking-wider uppercase shadow-[0_0_25px_rgba(236,72,153,0.35)] hover:shadow-[0_0_35px_rgba(236,72,153,0.6)] hover:scale-[1.03] transition-all"
               >
                 <span>Explore Creative Design</span>
                 <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
@@ -272,14 +284,14 @@ export default function GraphicsCom() {
 
               <a
                 href="/contact"
-                className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-[#130d24]/90 border border-white/15 hover:border-pink-500/40 text-zinc-200 hover:text-white font-semibold text-xs tracking-wider uppercase shadow-lg hover:scale-[1.03] transition-all backdrop-blur-md"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-[#130d24]/90 border border-white/15 hover:border-pink-500/40 text-zinc-200 hover:text-white font-semibold text-xs tracking-wider uppercase shadow-lg hover:scale-[1.03] transition-all backdrop-blur-md"
               >
                 Request Design Quote
               </a>
             </div>
 
             {/* Metrics Footer */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10 max-w-xl">
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10 w-full max-w-xl">
               <div>
                 <div className="text-2xl font-extrabold text-white">4K+</div>
                 <div className="text-[10px] text-zinc-400 uppercase tracking-wider mt-0.5">Photorealistic Assets</div>
@@ -299,9 +311,7 @@ export default function GraphicsCom() {
           </div>
 
         </div>
-
       </div>
     </section>
   );
 }
-

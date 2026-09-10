@@ -35,11 +35,10 @@ export default function ToolsTechCom() {
               <button
                 key={cat}
                 onClick={() => setActiveTab(cat)}
-                className={`relative px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 focus:outline-none ${
-                  isActive
+                className={`relative px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 focus:outline-none ${isActive
                     ? 'text-white bg-gradient-to-r from-[#A855F7] via-[#C084FC] to-[#EC4899] shadow-lg shadow-purple-600/30 scale-105'
                     : 'text-zinc-400 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 hover:border-white/20'
-                }`}
+                  }`}
               >
                 {cat}
               </button>

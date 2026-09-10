@@ -1,13 +1,15 @@
 import React, { useRef, useMemo, useEffect, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment, Float, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Sparkles, ArrowRight, Building2, Home, Compass, Layers } from 'lucide-react';
 import { useNearScreen } from '../hooks/useNearScreen';
 
+useGLTF.preload('/3dModels/VR-Model.glb');
+
 /* ============================================================
- * RESPONSIVE HELPER HOOK
+ * RESPONSIVE HELPER HOOK (FOR DOM ELEMENTS)
  * ============================================================ */
 function useViewportInfo() {
   const [info, setInfo] = useState(() => {
@@ -58,7 +60,7 @@ function ParticleDust({ isMobile }) {
   const mat = useMemo(() => {
     return new THREE.PointsMaterial({
       size: isMobile ? 0.045 : 0.038,
-      color: '#10B981', // Emerald / Architectural accent
+      color: '#10B981',
       transparent: true,
       opacity: 0.65,
       blending: THREE.AdditiveBlending,
@@ -76,27 +78,49 @@ function ParticleDust({ isMobile }) {
 }
 
 /* ============================================================
- * 3D ARCHITECTURAL SHOWCASE MODEL COMPONENT
+ * 3D ARCHITECTURAL SHOWCASE MODEL (INDEPENDENT RESPONSIVE CONFIG)
  * ============================================================ */
-function ArchitecturalShowcaseModel({ isMobile }) {
-  const { scene } = useGLTF('/3dModels/VR-Model.glb'); // You can keep the same asset or update path if needed
+function ArchitecturalShowcaseModel() {
+  const { scene } = useGLTF('/3dModels/VR-Model.glb');
   const groupRef = useRef();
+  const { size } = useThree();
 
-  const clonedScene = useMemo(() => {
-    const cloned = scene.clone(true);
-    cloned.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-    return cloned;
+  // Desktop detection threshold (Tailwind 'lg' breakpoint = 1024px)
+  const isDesktop = size.width >= 1024;
+
+  // -------------------------------------------------------------
+  // DESKTOP VS MOBILE TRANSFORM CONFIGURATION
+  // -------------------------------------------------------------
+  const desktopConfig = {
+    scale: 10,               // Original desktop scale
+    position: [0, -0.3, 0],  // Original desktop [x, y, z] position
+  };
+
+  const mobileConfig = {
+    scale: 9,              // Mobile scale tailored for small viewports
+    position: [0.2, -0.15, 0], // Mobile [x, y, z] position centered vertically
+  };
+
+  const currentConfig = isDesktop ? desktopConfig : mobileConfig;
+
+  useEffect(() => {
+    if (scene) {
+      scene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
   }, [scene]);
 
   return (
-    <group ref={groupRef} position={[0, -0.3, 0]} scale={isMobile ? 2.8 : 10}>
-      <primitive object={clonedScene} />
-      {/* Architectural Emerald & Cyan Point Lights */}
+    <group
+      ref={groupRef}
+      position={currentConfig.position}
+      scale={currentConfig.scale}
+    >
+      <primitive object={scene} />
       <pointLight position={[0, 2, 1]} color="#10B981" intensity={4.5} distance={8} />
       <pointLight position={[-2, -1, -1]} color="#06B6D4" intensity={3.5} distance={6} />
       <pointLight position={[2, 1, -1]} color="#3B82F6" intensity={3.5} distance={6} />
@@ -108,9 +132,9 @@ function ArchitecturalShowcaseModel({ isMobile }) {
 function CanvasLoader() {
   return (
     <Html center>
-      <div className="flex flex-col items-center justify-center space-y-2 bg-[#0a1a14]/90 p-4 rounded-xl border border-emerald-500/30 backdrop-blur-md">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-mono text-emerald-300">Loading Unity 3D Environment...</span>
+      <div className="flex flex-col items-center justify-center space-y-2 bg-[#0a1a14]/90 p-4 rounded-xl border border-emerald-500/30 backdrop-blur-md whitespace-nowrap">
+        <div className="w-7 h-7 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-[11px] font-mono text-emerald-300">Loading 3D Environment...</span>
       </div>
     </Html>
   );
@@ -139,12 +163,11 @@ export default function VrCom() {
       </div>
 
       <div className="relative z-10 max-w-[1900px] mx-auto px-6 sm:px-12 flex flex-col min-h-[90vh]">
-        
-        {/* 2-COLUMN GRID (LEFT: CONTENT TEXT | RIGHT: 3D MODEL) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 items-center w-full my-auto gap-8 lg:gap-12">
+        {/* 2-COLUMN GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-center w-full my-auto gap-10 lg:gap-12">
           
-          {/* LEFT COLUMN: CONTENT TEXT */}
-          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-left order-1">
+          {/* CONTENT TEXT (Mobile: Bottom / Desktop: Left) */}
+          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-left order-2 lg:order-1">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-[#10B981] font-mono text-xs font-bold tracking-wider w-fit shadow-[0_0_15px_rgba(16,185,129,0.2)]">
               <Sparkles size={14} />
               <span>UNITY 3D REAL ESTATE VISUALIZATION</span>
@@ -233,7 +256,8 @@ export default function VrCom() {
             </div>
           </div>
 
-          <div className="lg:col-span-7 w-full h-[600px] sm:h-[750px] lg:h-[900px] relative flex items-center justify-center bg-transparent overflow-visible order-2">
+          {/* 3D MODEL CANVAS (Mobile: Top / Desktop: Right) */}
+          <div className="lg:col-span-7 w-full h-[360px] sm:h-[480px] lg:h-[750px] relative flex items-center justify-center bg-transparent overflow-visible order-1 lg:order-2">
             <div className="absolute inset-0 w-full h-full bg-transparent pointer-events-none overflow-visible">
               <Canvas
                 frameloop={isNear ? 'always' : 'never'}
@@ -257,7 +281,7 @@ export default function VrCom() {
 
                 <Suspense fallback={<CanvasLoader />}>
                   <Float speed={1.8} floatIntensity={0.5}>
-                    <ArchitecturalShowcaseModel isMobile={isMobile} />
+                    <ArchitecturalShowcaseModel />
                   </Float>
                 </Suspense>
 
@@ -267,7 +291,6 @@ export default function VrCom() {
           </div>
 
         </div>
-
       </div>
     </section>
   );

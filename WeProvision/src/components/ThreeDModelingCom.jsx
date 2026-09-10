@@ -1,17 +1,39 @@
 import React, { useRef, useEffect, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Box, Layers, Palette, ShieldCheck } from 'lucide-react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { useGLTF, useAnimations, Float, Environment, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useNearScreen } from '../hooks/useNearScreen';
 
 useGLTF.preload('/3dModels/walking-robot.glb');
 
+/* ============================================================
+ * 3D WALKING ROBOT MODEL (SEPARATED DESKTOP & MOBILE CONFIG)
+ * ============================================================ */
 function WalkingRobotModel() {
   const groupRef = useRef();
   const { scene, animations } = useGLTF('/3dModels/walking-robot.glb');
   const { actions } = useAnimations(animations, groupRef);
+  const { size } = useThree();
+
+  // Screen check matching Tailwind's lg breakpoint (1024px)
+  const isDesktop = size.width >= 1024;
+
+  // -------------------------------------------------------------
+  // DESKTOP VS MOBILE TRANSFORM CONFIGURATION
+  // -------------------------------------------------------------
+  const desktopConfig = {
+    scale: 0.015,             // Original desktop scale
+    position: [0, -1.5, 0],   // Original desktop [x, y, z] position
+  };
+
+  const mobileConfig = {
+    scale: 0.015,             // Optimized mobile scale to prevent viewport overflow
+    position: [0, -1.8, 0],  // Mobile [x, y, z] position centered vertically
+  };
+
+  const currentConfig = isDesktop ? desktopConfig : mobileConfig;
 
   useEffect(() => {
     if (actions) {
@@ -41,8 +63,12 @@ function WalkingRobotModel() {
   }, [actions]);
 
   return (
-    <group ref={groupRef} position={[0, -1.5, 0]}>
-      <primitive object={scene} scale={0.015} />
+    <group
+      ref={groupRef}
+      position={currentConfig.position}
+      scale={currentConfig.scale}
+    >
+      <primitive object={scene} />
     </group>
   );
 }
@@ -68,13 +94,12 @@ export default function ThreeDModelingCom() {
         <div className="absolute inset-0 bg-[radial-gradient(#a855f7_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.07]" />
       </div>
 
-      <div className="relative z-10 max-w-[1900px] mx-auto px-6 sm:px-12 flex flex-col min-h-[90vh]">
-
-        {/* 2-COLUMN GRID (LEFT: 3D WALKING ROBOT MODEL | RIGHT: CONTENT) */}
+      <div className="relative z-10 max-w-[1900px] mx-auto px-6 sm:px-12 flex flex-col min-h-[100vh]">
+        {/* 2-COLUMN GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 items-center w-full my-auto gap-8 lg:gap-12">
-
-          {/* LEFT COLUMN: 3D WALKING ROBOT MODEL */}
-          <div className="lg:col-span-7 w-full h-[380px] sm:h-[520px] lg:h-[650px] relative flex items-center justify-center bg-transparent overflow-hidden order-2 lg:order-1 isolate">
+          
+          {/* 3D WALKING ROBOT MODEL (Mobile: Top / Desktop: Left) */}
+          <div className="lg:col-span-7 w-full h-[360px] sm:h-[480px] lg:h-[650px] relative flex items-center justify-center bg-transparent overflow-hidden order-1 lg:order-1 isolate">
             <Canvas
               frameloop={isNear ? 'always' : 'never'}
               camera={{ position: [0, 0, 5.5], fov: 42 }}
@@ -111,8 +136,8 @@ export default function ThreeDModelingCom() {
             </Canvas>
           </div>
 
-          {/* RIGHT COLUMN: CONTENT TEXT */}
-          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-left order-1 lg:order-2">
+          {/* CONTENT TEXT (Mobile: Bottom / Desktop: Right) */}
+          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-left order-2 lg:order-2">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-purple-950/80 border border-purple-500/40 text-[#A855F7] font-mono text-xs font-bold tracking-wider w-fit shadow-[0_0_15px_rgba(168,85,247,0.2)]">
               <Sparkles size={14} />
               <span>3D MODELING & CGI STUDIO</span>
@@ -202,7 +227,6 @@ export default function ThreeDModelingCom() {
           </div>
 
         </div>
-
       </div>
     </section>
   );

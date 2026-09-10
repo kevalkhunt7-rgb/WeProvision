@@ -1,13 +1,15 @@
 import React, { useRef, useMemo, useEffect, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, useAnimations, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { Sparkles, ArrowRight, Cpu, Layers, Zap } from 'lucide-react';
 import { useNearScreen } from '../hooks/useNearScreen';
 
+useGLTF.preload('/3dModels/laptop.glb');
+
 /* ============================================================
- * RESPONSIVE HELPER HOOK
+ * RESPONSIVE HELPER HOOK (FOR DOM ELEMENTS)
  * ============================================================ */
 function useViewportInfo() {
   const [info, setInfo] = useState(() => {
@@ -78,10 +80,21 @@ function ParticleDust({ isMobile }) {
 /* ============================================================
  * STATIC 3D LAPTOP MODEL
  * ============================================================ */
-function StaticLaptopModel({ isMobile }) {
+function StaticLaptopModel() {
   const groupRef = useRef();
   const { scene, animations } = useGLTF('/3dModels/laptop.glb');
   const { actions } = useAnimations(animations, groupRef);
+  const { size } = useThree();
+
+  const isDesktop = size.width >= 1024;
+  const isTablet = size.width >= 640 && size.width < 1024;
+
+  // Discrete position and scale per device
+  const config = isDesktop
+    ? { scale: 1.2, x: 0.35, y: -0.45, z: 0 }
+    : isTablet
+    ? { scale: 0.95, x: 0, y: -0.35, z: 0 }
+    : { scale: 0.78, x: 0, y: -0.3, z: 0 };
 
   useEffect(() => {
     if (scene) {
@@ -97,7 +110,11 @@ function StaticLaptopModel({ isMobile }) {
         if (
           child.isMesh &&
           name.includes('laptop screen') &&
-          (name.includes('002') || name.includes('003') || matName.includes('002') || matName.includes('003') || matName.includes('material.003'))
+          (name.includes('002') ||
+            name.includes('003') ||
+            matName.includes('002') ||
+            matName.includes('003') ||
+            matName.includes('material.003'))
         ) {
           child.material = new THREE.MeshStandardMaterial({
             color: new THREE.Color('#0a0614'),
@@ -128,13 +145,15 @@ function StaticLaptopModel({ isMobile }) {
     if (!groupRef.current) return;
     const time = state.clock.getElapsedTime();
 
-    // Smooth continuous turntable rotation & floating animation
+    // Smooth turntable rotation
     groupRef.current.rotation.y += delta * 0.6;
-    groupRef.current.position.y = Math.sin(time * 2) * 0.05 - 0.05;
+
+    // Preserves the baseline y-offset while floating
+    groupRef.current.position.y = config.y + Math.sin(time * 2) * 0.05;
   });
 
   return (
-    <group ref={groupRef} position={[isMobile ? 0 : 0.35, -0.45, 0]} scale={isMobile ? 0.28 : 1.2}>
+    <group ref={groupRef} position={[config.x, config.y, config.z]} scale={config.scale}>
       <primitive object={scene} />
       <pointLight position={[0, 1.2, 0.4]} color="#06B6D4" intensity={3.5} distance={6} />
     </group>
@@ -164,12 +183,10 @@ export default function WebDevCom() {
       </div>
 
       <div className="relative z-10 max-w-[1900px] mx-auto px-6 sm:px-12 flex flex-col min-h-[90vh]">
-
         {/* 2-COLUMN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 items-center w-full my-auto gap-8">
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-center w-full my-auto gap-10 lg:gap-8">
           {/* LEFT COLUMN: CONTENT TEXT */}
-          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-left">
+          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 text-left order-2 lg:order-1">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-[#06B6D4] font-mono text-xs font-bold tracking-wider w-fit shadow-[0_0_15px_rgba(6,182,212,0.2)]">
               <Sparkles size={14} />
               <span>FULL-STACK WEB STUDIO</span>
@@ -258,8 +275,9 @@ export default function WebDevCom() {
             </div>
           </div>
 
-          <div className="lg:col-span-7 w-full h-[450px] sm:h-[550px] lg:h-[650px] relative flex items-center justify-center bg-transparent overflow-visible">
-            <div className="absolute inset-0 w-full h-full bg-transparent pointer-events-auto overflow-visible">
+          {/* RIGHT COLUMN: 3D MODEL CANVAS */}
+          <div className="lg:col-span-7 w-full h-[360px] sm:h-[480px] lg:h-[650px] relative flex items-center justify-center bg-transparent overflow-visible order-1 lg:order-2">
+            <div className="absolute inset-0 w-full h-full bg-transparent pointer-events-none overflow-visible">
               <Canvas
                 frameloop={isNear ? 'always' : 'never'}
                 dpr={[1, 1.5]}
@@ -282,16 +300,14 @@ export default function WebDevCom() {
                 <ParticleDust isMobile={isMobile} />
 
                 <Suspense fallback={null}>
-                  <StaticLaptopModel isMobile={isMobile} />
+                  <StaticLaptopModel />
                 </Suspense>
 
                 <Environment preset="city" />
               </Canvas>
             </div>
           </div>
-
         </div>
-
       </div>
     </section>
   );
